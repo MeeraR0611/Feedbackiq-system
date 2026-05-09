@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Smart Feedback Dashboard — FeedbackIQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#13131a; --surface2:#1c1c27; --border:#2a2a3d;
+  --accent:#7c6aff; --accent2:#ff6a9b;
+  --pos:#3dffa0; --neg:#ff5c7a; --neu:#ffaa32;
+  --text:#e8e8f0; --muted:#6b6b8a;
+  --sidebar-w:200px;
+  --font-head:'Syne',sans-serif; --font-body:'DM Sans',sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh; display:flex; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width:var(--sidebar-w); min-height:100vh;
+  background:var(--surface); border-right:1px solid var(--border);
+  display:flex; flex-direction:column;
+  position:fixed; top:0; left:0; bottom:0; z-index:50;
+}
+.sidebar-logo {
+  padding:1.5rem 1.4rem 1.2rem;
+  font-family:var(--font-head); font-size:1.1rem; font-weight:800;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  border-bottom:1px solid var(--border);
+  letter-spacing:-0.3px;
+}
+.sidebar-nav { padding:0.8rem 0; flex:1; }
+.nav-item {
+  display:flex; align-items:center; gap:0.65rem;
+  padding:0.65rem 1.4rem;
+  font-size:0.85rem; font-weight:500; color:var(--muted);
+  text-decoration:none; cursor:pointer;
+  border:none; background:none; width:100%; text-align:left;
+  transition:all 0.15s; border-left:3px solid transparent;
+}
+.nav-item:hover { color:var(--text); background:var(--surface2); }
+.nav-item.active { color:var(--accent); background:rgba(124,106,255,0.08); border-left-color:var(--accent); }
+.nav-icon { font-size:0.95rem; width:18px; text-align:center; }
+.sidebar-footer {
+  padding:1rem 1.4rem; border-top:1px solid var(--border);
+  font-size:0.75rem; color:var(--muted);
+}
+.sidebar-user { font-weight:600; color:var(--text); margin-bottom:0.35rem; font-size:0.82rem; }
+
+/* ── MAIN ── */
+.main { margin-left:var(--sidebar-w); flex:1; display:flex; flex-direction:column; min-height:100vh; }
+
+/* ── TOP BANNER ── */
+.top-banner {
+  background:linear-gradient(135deg, #1a1560 0%, #2a1880 55%, #160d42 100%);
+  padding:1.5rem 2rem; border-bottom:1px solid var(--border);
+  position:relative; overflow:hidden;
+}
+.top-banner::after {
+  content:''; position:absolute; inset:0; z-index:0;
+  background:radial-gradient(ellipse 60% 100% at 85% 50%, rgba(124,106,255,0.18) 0%, transparent 70%);
+}
+.top-banner h1 {
+  font-family:var(--font-head); font-size:1.45rem; font-weight:800;
+  position:relative; z-index:1;
+}
+.top-banner p {
+  font-size:0.83rem; color:rgba(232,232,240,0.65);
+  margin-top:0.25rem; position:relative; z-index:1; max-width:580px;
+}
+
+/* ── CONTENT ── */
+.content { padding:1.6rem 2rem; flex:1; }
+
+/* ── MAIN GRID ── */
+.main-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; margin-bottom:1.4rem; }
+
+/* ── CARDS ── */
+.card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:1.4rem;
+}
+.card h3 { font-family:var(--font-head); font-size:0.95rem; font-weight:700; margin-bottom:1.1rem; }
+.form-label {
+  font-size:0.75rem; font-weight:600; text-transform:uppercase;
+  letter-spacing:0.07em; color:var(--muted); margin-bottom:0.45rem; display:block;
+}
+textarea {
+  width:100%; background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:0.85rem; color:var(--text);
+  font-family:var(--font-body); font-size:0.88rem; line-height:1.6;
+  resize:vertical; min-height:115px; outline:none; transition:border-color 0.2s;
+}
+textarea:focus { border-color:var(--accent); }
+textarea::placeholder { color:var(--muted); }
+.btn-submit {
+  margin-top:0.9rem; width:100%;
+  background:linear-gradient(135deg, #2d22b8, #4a3af0);
+  color:#fff; border:none; border-radius:8px;
+  font-family:var(--font-head); font-size:0.92rem; font-weight:700;
+  padding:0.75rem; cursor:pointer; transition:all 0.2s;
+  letter-spacing:0.02em;
+}
+.btn-submit:hover { transform:translateY(-2px); box-shadow:0 6px 22px rgba(74,58,240,0.45); }
+.btn-submit:disabled { opacity:0.6; transform:none; cursor:not-allowed; }
+.sentiment-result {
+  margin-top:0.65rem; text-align:center;
+  font-size:0.88rem; font-weight:600; min-height:1.2rem;
+}
+.sentiment-result.Positive { color:var(--pos); }
+.sentiment-result.Negative { color:var(--neg); }
+.sentiment-result.Neutral  { color:var(--neu); }
+
+/* ── ANALYTICS PANEL ── */
+.analytics-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:1.4rem;
+  display:flex; flex-direction:column;
+}
+.analytics-card h3 { font-family:var(--font-head); font-size:0.95rem; font-weight:700; margin-bottom:1rem; }
+
+/* Sentiment count pills — matching screenshot style */
+.sentiment-pills {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:0.55rem; margin-bottom:1.1rem;
+}
+.s-pill {
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:9px; padding:0.7rem 0.4rem; text-align:center;
+  transition:transform 0.15s;
+}
+.s-pill:hover { transform:translateY(-2px); }
+.s-pill .pill-num {
+  font-family:var(--font-head); font-size:1.4rem; font-weight:800; line-height:1;
+}
+.s-pill .pill-lbl {
+  font-size:0.68rem; text-transform:uppercase; letter-spacing:0.07em;
+  color:var(--muted); margin-top:0.18rem;
+}
+.s-pill.pos .pill-num { color:var(--pos); }
+.s-pill.neg .pill-num { color:var(--neg); }
+.s-pill.neu .pill-num { color:var(--neu); }
+
+.donut-wrap { position:relative; flex:1; min-height:210px; }
+
+/* ── BOTTOM CHARTS ── */
+.charts-row { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; margin-bottom:1.4rem; }
+.chart-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:1.4rem;
+}
+.chart-card h3 { font-family:var(--font-head); font-size:0.9rem; font-weight:700; margin-bottom:0.9rem; }
+.chart-wrap { position:relative; height:210px; }
+
+/* ── HISTORY TABLE ── */
+.table-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; overflow:hidden; margin-bottom:1.4rem;
+}
+.table-card-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1rem 1.5rem; border-bottom:1px solid var(--border);
+}
+.table-card-header h3 { font-family:var(--font-head); font-size:0.9rem; font-weight:700; }
+table { width:100%; border-collapse:collapse; }
+th {
+  font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);
+  padding:0.65rem 1.5rem; text-align:left; border-bottom:1px solid var(--border);
+}
+td { padding:0.75rem 1.5rem; font-size:0.84rem; border-bottom:1px solid rgba(42,42,61,0.4); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--surface2); }
+.badge {
+  display:inline-block; padding:0.17rem 0.55rem; border-radius:100px;
+  font-size:0.68rem; font-weight:600; letter-spacing:0.04em;
+}
+.badge.Positive { background:rgba(61,255,160,0.12); color:var(--pos); }
+.badge.Negative { background:rgba(255,92,122,0.12); color:var(--neg); }
+.badge.Neutral  { background:rgba(255,170,50,0.12);  color:var(--neu); }
+.msg-cell { max-width:280px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); }
+
+@media(max-width:860px){
+  .sidebar { display:none; }
+  .main { margin-left:0; }
+  .main-grid,.charts-row { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">FeedbackIQ</div>
+  <nav class="sidebar-nav">
+    <a class="nav-item active" href="/dashboard">
+      <span class="nav-icon">📊</span> Dashboard
+    </a>
+    <a class="nav-item" href="/">
+      <span class="nav-icon">✏️</span> Submit Feedback
+    </a>
+    <a class="nav-item" href="/dashboard#analytics">
+      <span class="nav-icon">📈</span> Analytics
+    </a>
+    <button class="nav-item" id="sideAdminBtn" style="display:none" onclick="location.href='/admin'">
+      <span class="nav-icon">🔑</span> Admin Panel
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="sidebar-user" id="sideUser">Guest</div>
+    <button id="sideLogout" style="display:none;background:none;border:none;color:var(--muted);font-size:0.75rem;cursor:pointer;padding:0" onclick="doLogout()">Logout →</button>
+    <a id="sideLogin" href="/" style="font-size:0.75rem;color:var(--accent);text-decoration:none">Login / Register →</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <div class="top-banner">
+    <h1>Welcome to Smart Feedback System</h1>
+    <p>Collect, analyze, and visualize feedback using AI-powered sentiment analysis. Gain real-time insights and improve decision-making.</p>
+  </div>
+
+  <div class="content">
+
+    <!-- FORM + DONUT (side by side, matching screenshot) -->
+    <div class="main-grid">
+
+      <div class="card">
+        <h3>Submit Feedback</h3>
+        <label class="form-label">Enter Feedback</label>
+        <textarea id="msgInput" placeholder="Write your feedback here..." maxlength="1000"></textarea>
+        <button class="btn-submit" id="btnSubmit" onclick="submitFeedback()">Submit Feedback</button>
+        <div class="sentiment-result" id="sentimentResult"></div>
+      </div>
+
+      <div class="analytics-card" id="analytics">
+        <h3>Sentiment Analytics</h3>
+        <div class="sentiment-pills">
+          <div class="s-pill pos"><div class="pill-num" id="kPos">0</div><div class="pill-lbl">Positive</div></div>
+          <div class="s-pill neg"><div class="pill-num" id="kNeg">0</div><div class="pill-lbl">Negative</div></div>
+          <div class="s-pill neu"><div class="pill-num" id="kNeu">0</div><div class="pill-lbl">Neutral</div></div>
+        </div>
+        <div class="donut-wrap">
+          <canvas id="donutChart"></canvas>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- BAR + LINE charts -->
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>Sentiment Breakdown</h3>
+        <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Daily Trend</h3>
+        <div class="chart-wrap"><canvas id="lineChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- MY HISTORY -->
+    <div class="table-card" id="historySection" style="display:none">
+      <div class="table-card-header">
+        <h3>My Feedback History</h3>
+        <span style="font-size:0.75rem;color:var(--muted)" id="historyCount"></span>
+      </div>
+      <div id="historyBody"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+Chart.defaults.color = '#6b6b8a';
+Chart.defaults.borderColor = '#2a2a3d';
+let donutChart, barChart, lineChart;
+
+async function loadSummary() {
+  const r = await fetch('/api/summary');
+  const d = await r.json();
+  document.getElementById('kPos').textContent = d.positive;
+  document.getElementById('kNeg').textContent = d.negative;
+  document.getElementById('kNeu').textContent = d.neutral;
+
+  if (donutChart) donutChart.destroy();
+  donutChart = new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Positive', 'Negative', 'Neutral'],
+      datasets: [{
+        data: [d.positive, d.negative, d.neutral],
+        backgroundColor: ['rgba(61,255,160,0.85)', 'rgba(255,92,122,0.85)', 'rgba(255,170,50,0.85)'],
+        borderColor: '#13131a', borderWidth: 3, hoverOffset: 10
+      }]
+    },
+    options: {
+      plugins: {
+        legend: { position:'top', labels:{ padding:14, font:{size:11}, usePointStyle:true } },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} (${d.total ? Math.round(ctx.raw/d.total*100) : 0}%)` } }
+      },
+      cutout: '60%', responsive: true, maintainAspectRatio: false
+    }
+  });
+
+  if (barChart) barChart.destroy();
+  barChart = new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Positive', 'Negative', 'Neutral'],
+      datasets: [{
+        label: 'Count',
+        data: [d.positive, d.negative, d.neutral],
+        backgroundColor: ['rgba(61,255,160,0.7)','rgba(255,92,122,0.7)','rgba(255,170,50,0.7)'],
+        borderColor: ['#3dffa0','#ff5c7a','#ffaa32'],
+        borderWidth: 2, borderRadius: 8
+      }]
+    },
+    options: {
+      plugins: { legend: { display:false } },
+      scales: { y:{ beginAtZero:true, grid:{ color:'rgba(42,42,61,0.5)' } }, x:{ grid:{ display:false } } },
+      responsive: true, maintainAspectRatio: false
+    }
+  });
+
+  const trend = d.trend || {};
+  const days = Object.keys(trend).sort();
+  if (lineChart) lineChart.destroy();
+  lineChart = new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+      labels: days.length ? days : ['No data'],
+      datasets: [
+        { label:'Positive', data:days.map(dy=>trend[dy].Positive||0), borderColor:'#3dffa0', backgroundColor:'rgba(61,255,160,0.07)', tension:0.4, fill:true, pointRadius:4 },
+        { label:'Negative', data:days.map(dy=>trend[dy].Negative||0), borderColor:'#ff5c7a', backgroundColor:'rgba(255,92,122,0.07)', tension:0.4, fill:true, pointRadius:4 },
+        { label:'Neutral',  data:days.map(dy=>trend[dy].Neutral||0),  borderColor:'#ffaa32', backgroundColor:'rgba(255,170,50,0.07)',  tension:0.4, fill:true, pointRadius:4 },
+      ]
+    },
+    options: {
+      plugins: { legend:{ position:'bottom', labels:{ padding:14, font:{size:11}, usePointStyle:true } } },
+      scales: { y:{ beginAtZero:true, grid:{ color:'rgba(42,42,61,0.5)' } }, x:{ grid:{ display:false } } },
+      responsive: true, maintainAspectRatio: false
+    }
+  });
+}
+
+async function submitFeedback() {
+  const msg = document.getElementById('msgInput').value.trim();
+  if (!msg) { alert('Please enter some feedback.'); return; }
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true; btn.textContent = 'Analyzing…';
+  const r = await fetch('/api/feedback', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ message: msg })
+  });
+  const d = await r.json();
+  btn.disabled = false; btn.textContent = 'Submit Feedback';
+  if (d.sentiment) {
+    const el = document.getElementById('sentimentResult');
+    el.textContent = `Sentiment: ${d.sentiment}`;
+    el.className = `sentiment-result ${d.sentiment}`;
+    document.getElementById('msgInput').value = '';
+    loadSummary(); loadHistory();
+  }
+}
+
+async function loadHistory() {
+  const r = await fetch('/api/my-feedback');
+  if (r.status === 401) return;
+  const data = await r.json();
+  if (!data.length) return;
+  document.getElementById('historySection').style.display = 'block';
+  document.getElementById('historyCount').textContent = `${data.length} entries`;
+  document.getElementById('historyBody').innerHTML = `
+    <table>
+      <thead><tr><th>#</th><th>Message</th><th>Sentiment</th><th>Score</th><th>Date</th></tr></thead>
+      <tbody>${data.map((f,i)=>`
+        <tr>
+          <td style="color:var(--muted)">${i+1}</td>
+          <td class="msg-cell" title="${f.message.replace(/"/g,'&quot;')}">${f.message}</td>
+          <td><span class="badge ${f.sentiment}">${f.sentiment}</span></td>
+          <td style="font-family:monospace;font-size:0.78rem">${f.score}</td>
+          <td style="color:var(--muted)">${f.timestamp}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+}
+
+async function checkSession() {
+  const r = await fetch('/api/me');
+  const d = await r.json();
+  if (d.logged_in) {
+    document.getElementById('sideUser').textContent = d.name;
+    document.getElementById('sideLogout').style.display = 'block';
+    document.getElementById('sideLogin').style.display = 'none';
+    if (d.role === 'admin') document.getElementById('sideAdminBtn').style.display = 'flex';
+  }
+}
+async function doLogout() { await fetch('/api/logout',{method:'POST'}); location.reload(); }
+
+checkSession(); loadSummary(); loadHistory();
+</script>
+</body>
+</html>

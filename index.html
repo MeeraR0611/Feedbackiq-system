@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FeedbackIQ — Smart Feedback System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #13131a;
+  --surface2: #1c1c27;
+  --border: #2a2a3d;
+  --accent: #7c6aff;
+  --accent2: #ff6a9b;
+  --pos: #3dffa0;
+  --neg: #ff5c7a;
+  --neu: #ffcc50;
+  --text: #e8e8f0;
+  --muted: #6b6b8a;
+  --font-head: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+/* Background blobs */
+body::before {
+  content:'';
+  position:fixed; inset:0; z-index:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 20%, rgba(124,106,255,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 80% 80%, rgba(255,106,155,0.08) 0%, transparent 60%);
+  pointer-events:none;
+}
+
+/* NAV */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1rem 2rem;
+  background:rgba(10,10,15,0.85);
+  backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo {
+  font-family: var(--font-head);
+  font-size:1.3rem; font-weight:800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  letter-spacing:-0.5px;
+}
+.nav-links { display:flex; gap:0.75rem; align-items:center; }
+.nav-links a, .nav-links button {
+  font-family:var(--font-body); font-size:0.85rem; font-weight:500;
+  color:var(--muted); text-decoration:none;
+  background:none; border:none; cursor:pointer;
+  padding:0.4rem 0.9rem; border-radius:6px;
+  transition:all 0.2s;
+}
+.nav-links a:hover { color:var(--text); background:var(--surface2); }
+.btn-nav-primary {
+  background: var(--accent) !important;
+  color: #fff !important;
+  border-radius:6px !important;
+}
+.btn-nav-primary:hover { opacity:0.85; }
+#userGreeting { color:var(--text) !important; font-size:0.85rem; }
+
+/* HERO */
+.hero {
+  position:relative; z-index:1;
+  padding: 9rem 2rem 4rem;
+  text-align:center;
+  max-width:780px; margin:0 auto;
+}
+.hero-tag {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  font-size:0.75rem; font-weight:600; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--accent); background:rgba(124,106,255,0.12);
+  border:1px solid rgba(124,106,255,0.25);
+  padding:0.3rem 0.9rem; border-radius:100px; margin-bottom:1.5rem;
+}
+.hero h1 {
+  font-family:var(--font-head); font-size:clamp(2.4rem,6vw,4rem);
+  font-weight:800; line-height:1.1; letter-spacing:-1.5px;
+  margin-bottom:1.2rem;
+}
+.hero h1 span {
+  background: linear-gradient(135deg, var(--accent) 30%, var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.hero p { color:var(--muted); font-size:1.05rem; line-height:1.7; max-width:520px; margin:0 auto 2.5rem; }
+
+/* FORM CARD */
+.form-card {
+  position:relative; z-index:1;
+  max-width:640px; margin:0 auto 3rem;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:20px; padding:2rem;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.4);
+}
+.form-card label {
+  display:block; font-size:0.8rem; font-weight:600;
+  letter-spacing:0.06em; text-transform:uppercase;
+  color:var(--muted); margin-bottom:0.6rem;
+}
+textarea {
+  width:100%; background:var(--surface2); border:1px solid var(--border);
+  border-radius:10px; padding:1rem; color:var(--text);
+  font-family:var(--font-body); font-size:0.95rem; line-height:1.6;
+  resize:vertical; min-height:130px; outline:none;
+  transition:border-color 0.2s;
+}
+textarea:focus { border-color:var(--accent); }
+textarea::placeholder { color:var(--muted); }
+.char-count { text-align:right; font-size:0.75rem; color:var(--muted); margin-top:0.35rem; }
+.btn-submit {
+  margin-top:1.2rem; width:100%;
+  background: linear-gradient(135deg, var(--accent), #9b8cff);
+  color:#fff; border:none; border-radius:10px;
+  font-family:var(--font-head); font-size:1rem; font-weight:700;
+  padding:0.9rem; cursor:pointer; letter-spacing:0.02em;
+  transition:all 0.2s; position:relative; overflow:hidden;
+}
+.btn-submit:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(124,106,255,0.4); }
+.btn-submit:active { transform:translateY(0); }
+.btn-submit:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+
+/* RESULT PILL */
+#resultBox {
+  display:none; margin-top:1.2rem;
+  border-radius:12px; padding:1.1rem 1.4rem;
+  border:1px solid;
+  animation: fadeSlide 0.4s ease;
+}
+@keyframes fadeSlide {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+#resultBox.Positive { background:rgba(61,255,160,0.08); border-color:rgba(61,255,160,0.3); }
+#resultBox.Negative { background:rgba(255,92,122,0.08); border-color:rgba(255,92,122,0.3); }
+#resultBox.Neutral  { background:rgba(255,204,80,0.08); border-color:rgba(255,204,80,0.3); }
+.result-label {
+  font-family:var(--font-head); font-size:1.1rem; font-weight:700;
+  display:flex; align-items:center; gap:0.5rem; margin-bottom:0.3rem;
+}
+.result-label.Positive { color:var(--pos); }
+.result-label.Negative { color:var(--neg); }
+.result-label.Neutral  { color:var(--neu); }
+.result-score { font-size:0.82rem; color:var(--muted); }
+
+/* STATS BAR */
+.stats-bar {
+  position:relative; z-index:1;
+  max-width:640px; margin:0 auto 5rem;
+  display:grid; grid-template-columns:repeat(3,1fr); gap:1rem;
+}
+.stat-pill {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:1.2rem 1rem; text-align:center;
+  transition:transform 0.2s;
+}
+.stat-pill:hover { transform:translateY(-3px); }
+.stat-pill .num {
+  font-family:var(--font-head); font-size:1.8rem; font-weight:800;
+  margin-bottom:0.2rem;
+}
+.stat-pill .lbl { font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; }
+.stat-pill.pos .num { color:var(--pos); }
+.stat-pill.neg .num { color:var(--neg); }
+.stat-pill.neu .num { color:var(--neu); }
+
+/* AUTH MODAL */
+.modal-overlay {
+  display:none; position:fixed; inset:0; z-index:200;
+  background:rgba(0,0,0,0.7); backdrop-filter:blur(6px);
+  align-items:center; justify-content:center;
+}
+.modal-overlay.show { display:flex; }
+.modal {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:20px; padding:2rem; width:90%; max-width:420px;
+  animation: fadeSlide 0.3s ease;
+}
+.modal h2 {
+  font-family:var(--font-head); font-size:1.4rem; font-weight:700;
+  margin-bottom:1.5rem;
+}
+.modal input {
+  width:100%; background:var(--surface2); border:1px solid var(--border);
+  border-radius:8px; padding:0.75rem 1rem; color:var(--text);
+  font-family:var(--font-body); font-size:0.9rem; outline:none;
+  transition:border-color 0.2s; margin-bottom:0.75rem;
+}
+.modal input:focus { border-color:var(--accent); }
+.modal input::placeholder { color:var(--muted); }
+.btn-modal {
+  width:100%; background:linear-gradient(135deg, var(--accent), #9b8cff);
+  color:#fff; border:none; border-radius:8px; padding:0.8rem;
+  font-family:var(--font-head); font-weight:700; font-size:0.95rem;
+  cursor:pointer; transition:opacity 0.2s; margin-top:0.25rem;
+}
+.btn-modal:hover { opacity:0.85; }
+.modal-switch { text-align:center; margin-top:1rem; font-size:0.85rem; color:var(--muted); }
+.modal-switch span { color:var(--accent); cursor:pointer; font-weight:500; }
+.modal-switch span:hover { text-decoration:underline; }
+.modal-close {
+  float:right; background:none; border:none; color:var(--muted);
+  font-size:1.3rem; cursor:pointer; margin-top:-0.3rem;
+}
+.modal-err { font-size:0.82rem; color:var(--neg); margin-bottom:0.6rem; display:none; }
+.nav-links .btn-dash {
+  color: var(--accent) !important;
+  border: 1px solid var(--accent) !important;
+}
+
+footer {
+  position:relative; z-index:1;
+  text-align:center; padding:2rem;
+  color:var(--muted); font-size:0.8rem;
+  border-top:1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">FeedbackIQ</div>
+  <div class="nav-links" id="navLinks">
+    <a href="/dashboard">Dashboard</a>
+    <span id="userGreeting" style="display:none"></span>
+    <button id="btnAdminLink" style="display:none" onclick="location.href='/admin'">Admin Panel</button>
+    <button id="btnLogout" style="display:none" onclick="doLogout()">Logout</button>
+    <button id="btnLogin" class="btn-nav-primary" onclick="openModal('login')">Login</button>
+    <button id="btnRegister" onclick="openModal('register')">Register</button>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-tag">✦ Powered by VADER Sentiment</div>
+  <h1>Turn Feedback into<br><span>Actionable Insight</span></h1>
+  <p>Submit feedback and get instant sentiment analysis. Track trends, spot patterns, and understand what users really feel.</p>
+</section>
+
+<div class="form-card">
+  <label for="msgInput">Your Feedback</label>
+  <textarea id="msgInput" placeholder="Share your honest thoughts — about a product, service, or experience…" maxlength="1000"></textarea>
+  <div class="char-count"><span id="charCount">0</span>/1000</div>
+  <button class="btn-submit" id="btnSubmit" onclick="submitFeedback()">Analyze & Submit</button>
+  <div id="resultBox">
+    <div class="result-label" id="resultLabel"></div>
+    <div class="result-score" id="resultScore"></div>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar">
+  <div class="stat-pill pos"><div class="num" id="statPos">–</div><div class="lbl">Positive</div></div>
+  <div class="stat-pill neg"><div class="num" id="statNeg">–</div><div class="lbl">Negative</div></div>
+  <div class="stat-pill neu"><div class="num" id="statNeu">–</div><div class="lbl">Neutral</div></div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2 id="modalTitle">Login</h2>
+    <div class="modal-err" id="modalErr"></div>
+    <div id="registerFields" style="display:none">
+      <input type="text" id="regName" placeholder="Full Name"/>
+    </div>
+    <input type="email" id="authEmail" placeholder="Email"/>
+    <input type="password" id="authPass" placeholder="Password"/>
+    <button class="btn-modal" id="btnModalSubmit" onclick="submitAuth()">Login</button>
+    <div class="modal-switch" id="modalSwitch">
+      Don't have an account? <span onclick="toggleModal()">Register</span>
+    </div>
+  </div>
+</div>
+
+<footer>FeedbackIQ © 2024 — Built with Flask + VADER Sentiment + Chart.js</footer>
+
+<script>
+let isLogin = true;
+
+async function checkSession() {
+  const r = await fetch('/api/me');
+  const d = await r.json();
+  if (d.logged_in) {
+    document.getElementById('userGreeting').textContent = `Hi, ${d.name}`;
+    document.getElementById('userGreeting').style.display='inline';
+    document.getElementById('btnLogin').style.display='none';
+    document.getElementById('btnRegister').style.display='none';
+    document.getElementById('btnLogout').style.display='inline';
+    if (d.role === 'admin') document.getElementById('btnAdminLink').style.display='inline';
+  }
+}
+
+async function loadStats() {
+  const r = await fetch('/api/summary');
+  const d = await r.json();
+  document.getElementById('statPos').textContent = d.positive;
+  document.getElementById('statNeg').textContent = d.negative;
+  document.getElementById('statNeu').textContent = d.neutral;
+}
+
+document.getElementById('msgInput').addEventListener('input', function() {
+  document.getElementById('charCount').textContent = this.value.length;
+});
+
+async function submitFeedback() {
+  const msg = document.getElementById('msgInput').value.trim();
+  if (!msg) { alert('Please enter some feedback.'); return; }
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true; btn.textContent = 'Analyzing…';
+
+  const r = await fetch('/api/feedback', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({message: msg})
+  });
+  const d = await r.json();
+  btn.disabled = false; btn.textContent = 'Analyze & Submit';
+
+  if (d.sentiment) {
+    const box = document.getElementById('resultBox');
+    const label = document.getElementById('resultLabel');
+    const score = document.getElementById('resultScore');
+    const icons = {Positive:'😊', Negative:'😞', Neutral:'😐'};
+    box.className = d.sentiment;
+    label.className = `result-label ${d.sentiment}`;
+    label.textContent = `${icons[d.sentiment]} ${d.sentiment}`;
+    score.textContent = `Compound score: ${d.score} (range: -1 to +1)`;
+    box.style.display='block';
+    document.getElementById('msgInput').value='';
+    document.getElementById('charCount').textContent='0';
+    loadStats();
+  }
+}
+
+function openModal(type) {
+  isLogin = (type === 'login');
+  document.getElementById('modalTitle').textContent = isLogin ? 'Login' : 'Create Account';
+  document.getElementById('btnModalSubmit').textContent = isLogin ? 'Login' : 'Register';
+  document.getElementById('registerFields').style.display = isLogin ? 'none' : 'block';
+  document.getElementById('modalSwitch').innerHTML = isLogin
+    ? `Don't have an account? <span onclick="toggleModal()">Register</span>`
+    : `Already have an account? <span onclick="toggleModal()">Login</span>`;
+  document.getElementById('modalErr').style.display='none';
+  document.getElementById('authModal').classList.add('show');
+}
+function closeModal() { document.getElementById('authModal').classList.remove('show'); }
+function toggleModal() { openModal(isLogin ? 'register' : 'login'); }
+
+async function submitAuth() {
+  const email = document.getElementById('authEmail').value.trim();
+  const pass  = document.getElementById('authPass').value;
+  const errEl = document.getElementById('modalErr');
+  errEl.style.display='none';
+
+  let url = '/api/login', body = {email, password: pass};
+  if (!isLogin) {
+    const name = document.getElementById('regName').value.trim();
+    url = '/api/register'; body = {name, email, password: pass};
+  }
+  const r = await fetch(url, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  const d = await r.json();
+  if (!r.ok) { errEl.textContent = d.error; errEl.style.display='block'; return; }
+  closeModal(); location.reload();
+}
+
+async function doLogout() {
+  await fetch('/api/logout', {method:'POST'});
+  location.reload();
+}
+
+checkSession(); loadStats();
+</script>
+</body>
+</html>

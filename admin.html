@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin — FeedbackIQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0a0f; --surface:#13131a; --surface2:#1c1c27; --border:#2a2a3d;
+  --accent:#7c6aff; --accent2:#ff6a9b;
+  --pos:#3dffa0; --neg:#ff5c7a; --neu:#ffcc50;
+  --text:#e8e8f0; --muted:#6b6b8a;
+  --font-head:'Syne',sans-serif; --font-body:'DM Sans',sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:var(--font-body); min-height:100vh; }
+nav {
+  position:sticky; top:0; z-index:100;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:1rem 2rem;
+  background:rgba(10,10,15,0.9); backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo { font-family:var(--font-head); font-size:1.3rem; font-weight:800;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.nav-links { display:flex; gap:0.6rem; align-items:center; }
+.nav-links a, .nav-links button {
+  font-size:0.85rem; color:var(--muted); text-decoration:none;
+  background:none; border:none; cursor:pointer;
+  padding:0.4rem 0.9rem; border-radius:6px; transition:all 0.2s;
+}
+.nav-links a:hover, .nav-links button:hover { color:var(--text); background:var(--surface2); }
+
+.page { padding:2.5rem 2rem; max-width:1100px; margin:0 auto; }
+.page-header { margin-bottom:2rem; }
+.page-header h1 { font-family:var(--font-head); font-size:2rem; font-weight:800; }
+.page-header p { color:var(--muted); font-size:0.9rem; margin-top:0.3rem; }
+
+.table-card { background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+.table-header { display:flex; align-items:center; justify-content:space-between; padding:1.2rem 1.5rem; border-bottom:1px solid var(--border); }
+.table-header h3 { font-family:var(--font-head); font-size:1rem; font-weight:700; }
+.count-badge { background:var(--surface2); border:1px solid var(--border); border-radius:100px; padding:0.2rem 0.7rem; font-size:0.78rem; color:var(--muted); }
+table { width:100%; border-collapse:collapse; }
+th { font-size:0.72rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted);
+     padding:0.75rem 1.5rem; text-align:left; border-bottom:1px solid var(--border); }
+td { padding:0.85rem 1.5rem; font-size:0.88rem; border-bottom:1px solid rgba(42,42,61,0.5); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--surface2); }
+.badge { display:inline-block; padding:0.2rem 0.65rem; border-radius:100px; font-size:0.72rem; font-weight:600; }
+.badge.Positive { background:rgba(61,255,160,0.12); color:var(--pos); }
+.badge.Negative { background:rgba(255,92,122,0.12); color:var(--neg); }
+.badge.Neutral  { background:rgba(255,204,80,0.12);  color:var(--neu); }
+.msg-cell { max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--muted); }
+.btn-delete {
+  background:rgba(255,92,122,0.1); border:1px solid rgba(255,92,122,0.3);
+  color:var(--neg); border-radius:6px; padding:0.3rem 0.7rem;
+  font-size:0.78rem; cursor:pointer; transition:all 0.2s;
+}
+.btn-delete:hover { background:rgba(255,92,122,0.2); }
+#accessDenied {
+  text-align:center; padding:4rem 2rem;
+  color:var(--muted); font-size:1rem;
+}
+#accessDenied h2 { font-family:var(--font-head); font-size:1.5rem; color:var(--neg); margin-bottom:0.5rem; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">FeedbackIQ</div>
+  <div class="nav-links">
+    <a href="/">Home</a>
+    <a href="/dashboard">Dashboard</a>
+    <button onclick="doLogout()">Logout</button>
+  </div>
+</nav>
+
+<div class="page" id="mainContent" style="display:none">
+  <div class="page-header">
+    <h1>Admin Panel</h1>
+    <p>Manage all submitted feedback entries</p>
+  </div>
+  <div class="table-card">
+    <div class="table-header">
+      <h3>All Feedback</h3>
+      <span class="count-badge" id="totalCount">0 entries</span>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>User</th><th>Message</th><th>Sentiment</th><th>Score</th><th>Date</th><th>Action</th></tr></thead>
+      <tbody id="adminBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="accessDenied" style="display:none">
+  <h2>Access Denied</h2>
+  <p>You need admin privileges to view this page.</p>
+</div>
+
+<script>
+async function init() {
+  const r = await fetch('/api/me');
+  const d = await r.json();
+  if (!d.logged_in || d.role !== 'admin') {
+    document.getElementById('accessDenied').style.display='block';
+    return;
+  }
+  document.getElementById('mainContent').style.display='block';
+  loadAll();
+}
+
+async function loadAll() {
+  const r = await fetch('/api/admin/all-feedback');
+  if (!r.ok) return;
+  const data = await r.json();
+  document.getElementById('totalCount').textContent = `${data.length} entries`;
+  const tbody = document.getElementById('adminBody');
+  tbody.innerHTML = data.map((f,i) => `
+    <tr id="row-${f.id}">
+      <td style="color:var(--muted)">${i+1}</td>
+      <td>${f.user}</td>
+      <td class="msg-cell" title="${f.message.replace(/"/g,'&quot;')}">${f.message}</td>
+      <td><span class="badge ${f.sentiment}">${f.sentiment}</span></td>
+      <td style="font-family:monospace;font-size:0.82rem">${f.score}</td>
+      <td style="color:var(--muted)">${f.timestamp}</td>
+      <td><button class="btn-delete" onclick="deleteFb(${f.id})">Delete</button></td>
+    </tr>`).join('');
+}
+
+async function deleteFb(id) {
+  if (!confirm('Delete this feedback entry?')) return;
+  const r = await fetch(`/api/admin/delete/${id}`, {method:'DELETE'});
+  if (r.ok) { document.getElementById(`row-${id}`)?.remove(); }
+}
+
+async function doLogout() {
+  await fetch('/api/logout', {method:'POST'});
+  location.href='/';
+}
+
+init();
+</script>
+</body>
+</html>
