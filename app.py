@@ -23,7 +23,7 @@ USE_MYSQL = True   # ← Set to True to switch to MySQL
 
 if USE_MYSQL:
     MYSQL_USER     = 'root'
-    MYSQL_PASSWORD = 'Danny%402005'
+    MYSQL_PASSWORD = 'yourpassword'
     MYSQL_HOST     = 'localhost'
     MYSQL_PORT     = '3306'
     MYSQL_DB       = 'feedbackiq'
