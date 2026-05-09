@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FeedbackIQ — MySQL Schema & Postman API Results</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d0d14; --surface:#15151f; --surface2:#1e1e2e; --border:#2a2a3d;
+  --accent:#7c6aff; --accent2:#ff6a9b; --pos:#3dffa0; --neg:#ff5c7a; --neu:#ffaa32;
+  --text:#e8e8f0; --muted:#6b6b8a; --code-bg:#0a0a10;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'DM Sans',sans-serif; padding:2.5rem 2rem; max-width:1100px; margin:0 auto; }
+
+h1 { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:0.4rem; }
+.subtitle { color:var(--muted); font-size:0.9rem; margin-bottom:2.5rem; }
+
+h2 { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:700;
+  margin:2.5rem 0 1.2rem; display:flex; align-items:center; gap:0.6rem; }
+h2 .tag {
+  font-size:0.7rem; font-weight:600; letter-spacing:0.07em; text-transform:uppercase;
+  background:rgba(124,106,255,0.15); color:var(--accent); border:1px solid rgba(124,106,255,0.3);
+  padding:0.18rem 0.6rem; border-radius:100px; font-family:'DM Sans',sans-serif;
+}
+
+/* ── SQL SETUP BOX ── */
+.sql-box {
+  background:var(--code-bg); border:1px solid var(--border);
+  border-radius:12px; overflow:hidden; margin-bottom:2rem;
+}
+.sql-box-header {
+  background:var(--surface2); padding:0.6rem 1.2rem;
+  display:flex; align-items:center; justify-content:space-between;
+  border-bottom:1px solid var(--border);
+}
+.sql-box-header span { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--muted); }
+.sql-box pre {
+  padding:1.2rem 1.4rem; font-family:'JetBrains Mono',monospace;
+  font-size:0.82rem; line-height:1.7; overflow-x:auto; color:#c9d1d9;
+}
+.kw  { color:#ff7b72; }
+.str { color:#a5d6ff; }
+.cmt { color:#6b6b8a; font-style:italic; }
+.fn  { color:#d2a8ff; }
+.num { color:#79c0ff; }
+
+/* ── SCHEMA TABLES ── */
+.schema-grid { display:grid; grid-template-columns:1fr 1fr; gap:1.4rem; margin-bottom:2rem; }
+.schema-table {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; overflow:hidden;
+}
+.schema-table-header {
+  background:linear-gradient(135deg,rgba(124,106,255,0.2),rgba(255,106,155,0.1));
+  padding:0.9rem 1.2rem; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:0.6rem;
+}
+.schema-table-header .tname {
+  font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; color:var(--accent);
+}
+.schema-table-header .tdesc { font-size:0.75rem; color:var(--muted); }
+.field-row {
+  display:grid; grid-template-columns:28px 1fr 110px 60px;
+  align-items:center; gap:0.5rem;
+  padding:0.55rem 1.2rem; border-bottom:1px solid rgba(42,42,61,0.5);
+  font-size:0.82rem;
+}
+.field-row:last-child { border-bottom:none; }
+.field-row:hover { background:var(--surface2); }
+.pk-icon { font-size:0.7rem; text-align:center; }
+.field-name { font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--text); }
+.field-type { font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:#79c0ff; }
+.field-note { font-size:0.7rem; color:var(--muted); }
+.badge-pk { background:rgba(255,204,80,0.15); color:#ffcc50; border:1px solid rgba(255,204,80,0.3); border-radius:4px; padding:0.1rem 0.35rem; font-size:0.65rem; font-weight:700; }
+.badge-fk { background:rgba(61,255,160,0.12); color:var(--pos); border:1px solid rgba(61,255,160,0.3); border-radius:4px; padding:0.1rem 0.35rem; font-size:0.65rem; font-weight:700; }
+.badge-nn { background:rgba(255,92,122,0.1); color:var(--neg); border:1px solid rgba(255,92,122,0.25); border-radius:4px; padding:0.1rem 0.35rem; font-size:0.65rem; }
+.badge-ai { background:rgba(124,106,255,0.12); color:var(--accent); border:1px solid rgba(124,106,255,0.3); border-radius:4px; padding:0.1rem 0.35rem; font-size:0.65rem; }
+
+/* ── ER RELATIONSHIP ── */
+.er-box {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; padding:1.4rem; margin-bottom:2rem; text-align:center;
+}
+.er-diagram {
+  display:flex; align-items:center; justify-content:center; gap:1rem;
+  flex-wrap:wrap; margin-top:0.5rem;
+}
+.er-entity {
+  background:var(--surface2); border:2px solid var(--border);
+  border-radius:10px; padding:0.9rem 1.4rem; min-width:140px;
+}
+.er-entity .ename { font-family:'Syne',sans-serif; font-weight:700; font-size:0.95rem; color:var(--accent); margin-bottom:0.5rem; }
+.er-entity .efields { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--muted); line-height:1.8; text-align:left; }
+.er-arrow { font-size:1.5rem; color:var(--border); display:flex; flex-direction:column; align-items:center; gap:0.1rem; }
+.er-arrow span { font-size:0.68rem; color:var(--muted); font-family:'DM Sans',sans-serif; }
+
+/* ── POSTMAN RESULTS ── */
+.postman-list { display:flex; flex-direction:column; gap:1rem; margin-bottom:2rem; }
+.postman-item {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:14px; overflow:hidden;
+}
+.postman-header {
+  display:flex; align-items:center; gap:0.9rem;
+  padding:0.9rem 1.3rem; border-bottom:1px solid var(--border);
+  background:var(--surface2);
+}
+.method-badge {
+  font-family:'JetBrains Mono',monospace; font-size:0.72rem; font-weight:700;
+  padding:0.22rem 0.6rem; border-radius:5px; min-width:48px; text-align:center;
+}
+.method-badge.POST   { background:rgba(61,255,160,0.15); color:var(--pos); border:1px solid rgba(61,255,160,0.3); }
+.method-badge.GET    { background:rgba(124,106,255,0.15); color:var(--accent); border:1px solid rgba(124,106,255,0.3); }
+.method-badge.DELETE { background:rgba(255,92,122,0.15); color:var(--neg); border:1px solid rgba(255,92,122,0.3); }
+.endpoint-url { font-family:'JetBrains Mono',monospace; font-size:0.82rem; color:var(--text); flex:1; }
+.status-badge {
+  font-size:0.72rem; font-weight:700; padding:0.22rem 0.65rem; border-radius:5px;
+  font-family:'JetBrains Mono',monospace;
+}
+.status-badge.ok  { background:rgba(61,255,160,0.12); color:var(--pos); border:1px solid rgba(61,255,160,0.25); }
+.status-badge.err { background:rgba(255,92,122,0.12); color:var(--neg); border:1px solid rgba(255,92,122,0.25); }
+.postman-body { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+.pane { padding:1rem 1.3rem; }
+.pane:first-child { border-right:1px solid var(--border); }
+.pane-label { font-size:0.68rem; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:0.6rem; font-weight:600; }
+.pane pre {
+  font-family:'JetBrains Mono',monospace; font-size:0.78rem; line-height:1.65;
+  color:#c9d1d9; background:var(--code-bg); border-radius:8px;
+  padding:0.8rem 0.9rem; overflow-x:auto; border:1px solid var(--border);
+}
+.pane .desc { font-size:0.82rem; color:var(--muted); line-height:1.6; }
+.pane .desc strong { color:var(--text); }
+
+/* ── SWITCH TO MYSQL GUIDE ── */
+.guide-box {
+  background:rgba(124,106,255,0.07); border:1px solid rgba(124,106,255,0.2);
+  border-radius:14px; padding:1.4rem 1.6rem; margin-bottom:2rem;
+}
+.guide-box h3 { font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; color:var(--accent); margin-bottom:1rem; }
+.step-list { display:flex; flex-direction:column; gap:0.7rem; }
+.step { display:flex; gap:0.8rem; align-items:flex-start; }
+.step-num {
+  background:var(--accent); color:#fff;
+  width:22px; height:22px; border-radius:50%;
+  font-size:0.72rem; font-weight:700; display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; margin-top:0.1rem;
+}
+.step-text { font-size:0.85rem; color:var(--muted); line-height:1.5; }
+.step-text code { font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--text); background:var(--surface2); padding:0.1rem 0.4rem; border-radius:4px; }
+.step-text strong { color:var(--text); }
+
+@media(max-width:700px){
+  .schema-grid { grid-template-columns:1fr; }
+  .postman-body { grid-template-columns:1fr; }
+  .pane:first-child { border-right:none; border-bottom:1px solid var(--border); }
+}
+</style>
+</head>
+<body>
+
+<h1>FeedbackIQ — Database & API Docs</h1>
+<p class="subtitle">MySQL schema design · ER relationship · Postman API testing results</p>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 1 — MySQL Setup                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2>① MySQL Database Setup <span class="tag">SQL</span></h2>
+
+<div class="guide-box">
+  <h3>🔧 How to switch from SQLite → MySQL</h3>
+  <div class="step-list">
+    <div class="step"><div class="step-num">1</div><div class="step-text">Install MySQL driver: <code>pip install pymysql</code></div></div>
+    <div class="step"><div class="step-num">2</div><div class="step-text">Open <strong>MySQL Workbench</strong> and run the SQL below to create the database and user</div></div>
+    <div class="step"><div class="step-num">3</div><div class="step-text">In <code>app.py</code>, set <code>USE_MYSQL = True</code> and fill in your <code>MYSQL_PASSWORD</code></div></div>
+    <div class="step"><div class="step-num">4</div><div class="step-text">Run <code>python app.py</code> — Flask auto-creates all tables via <code>db.create_all()</code></div></div>
+  </div>
+</div>
+
+<div class="sql-box">
+  <div class="sql-box-header">
+    <span>📄 mysql_setup.sql — run this in MySQL Workbench</span>
+  </div>
+  <pre><span class="cmt">-- ─────────────────────────────────────────────────────────────
+-- FeedbackIQ MySQL Setup Script
+-- Run in MySQL Workbench or MySQL CLI before starting the app
+-- ─────────────────────────────────────────────────────────────</span>
+
+<span class="cmt">-- 1. Create the database</span>
+<span class="kw">CREATE DATABASE IF NOT EXISTS</span> feedbackiq
+  <span class="kw">CHARACTER SET</span> utf8mb4
+  <span class="kw">COLLATE</span> utf8mb4_unicode_ci;
+
+<span class="kw">USE</span> feedbackiq;
+
+<span class="cmt">-- 2. Create a dedicated user (change the password!)</span>
+<span class="kw">CREATE USER IF NOT EXISTS</span> <span class="str">'feedbackuser'</span>@<span class="str">'localhost'</span>
+  <span class="kw">IDENTIFIED BY</span> <span class="str">'yourpassword'</span>;
+
+<span class="kw">GRANT ALL PRIVILEGES ON</span> feedbackiq.* <span class="kw">TO</span> <span class="str">'feedbackuser'</span>@<span class="str">'localhost'</span>;
+<span class="kw">FLUSH PRIVILEGES</span>;
+
+<span class="cmt">-- 3. Tables (Flask/SQLAlchemy creates these automatically,
+--    but here they are explicitly for reference)</span>
+
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> <span class="fn">user</span> (
+  id        <span class="kw">INT</span>          <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  name      <span class="kw">VARCHAR</span>(<span class="num">100</span>) <span class="kw">NOT NULL</span>,
+  email     <span class="kw">VARCHAR</span>(<span class="num">120</span>) <span class="kw">NOT NULL UNIQUE</span>,
+  password  <span class="kw">VARCHAR</span>(<span class="num">200</span>) <span class="kw">NOT NULL</span>,
+  role      <span class="kw">VARCHAR</span>(<span class="num">20</span>)  <span class="kw">NOT NULL DEFAULT</span> <span class="str">'user'</span>,
+  <span class="kw">PRIMARY KEY</span> (id)
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;
+
+<span class="kw">CREATE TABLE IF NOT EXISTS</span> <span class="fn">feedback</span> (
+  id        <span class="kw">INT</span>          <span class="kw">NOT NULL AUTO_INCREMENT</span>,
+  user_id   <span class="kw">INT</span>          <span class="kw">DEFAULT NULL</span>,
+  message   <span class="kw">TEXT</span>         <span class="kw">NOT NULL</span>,
+  sentiment <span class="kw">VARCHAR</span>(<span class="num">20</span>)  <span class="kw">NOT NULL</span>,
+  score     <span class="kw">FLOAT</span>        <span class="kw">NOT NULL</span>,
+  timestamp <span class="kw">DATETIME</span>     <span class="kw">NOT NULL DEFAULT</span> <span class="fn">CURRENT_TIMESTAMP</span>,
+  <span class="kw">PRIMARY KEY</span> (id),
+  <span class="kw">FOREIGN KEY</span> (user_id) <span class="kw">REFERENCES</span> <span class="fn">user</span>(id) <span class="kw">ON DELETE SET NULL</span>
+) <span class="kw">ENGINE</span>=InnoDB <span class="kw">DEFAULT CHARSET</span>=utf8mb4;
+
+<span class="cmt">-- 4. Insert default admin user (password: admin123)</span>
+<span class="kw">INSERT IGNORE INTO</span> <span class="fn">user</span> (name, email, password, role) <span class="kw">VALUES</span> (
+  <span class="str">'Admin'</span>,
+  <span class="str">'admin@feedback.com'</span>,
+  <span class="str">'scrypt:32768:8:1$...'</span>,  <span class="cmt">-- Flask will hash this on first run</span>
+  <span class="str">'admin'</span>
+);
+
+<span class="cmt">-- 5. Verify tables created</span>
+<span class="kw">SHOW TABLES</span>;
+<span class="kw">DESCRIBE</span> <span class="fn">user</span>;
+<span class="kw">DESCRIBE</span> <span class="fn">feedback</span>;</pre>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 2 — Schema Tables                             -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2>② Database Schema <span class="tag">2 Tables</span></h2>
+
+<div class="schema-grid">
+
+  <!-- USER TABLE -->
+  <div class="schema-table">
+    <div class="schema-table-header">
+      <div>
+        <div class="tname">🗂 user</div>
+        <div class="tdesc">Stores registered users and admin accounts</div>
+      </div>
+    </div>
+    <div class="field-row" style="background:rgba(42,42,61,0.3)">
+      <div style="font-size:0.65rem;color:var(--muted);text-align:center">#</div>
+      <div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Column</div>
+      <div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Type</div>
+      <div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Flags</div>
+    </div>
+    <div class="field-row">
+      <div class="pk-icon">🔑</div>
+      <div class="field-name">id</div>
+      <div class="field-type">INT</div>
+      <div><span class="badge-pk">PK</span> <span class="badge-ai">AI</span></div>
+    </div>
+    <div class="field-row">
+      <div></div>
+      <div class="field-name">name</div>
+      <div class="field-type">VARCHAR(100)</div>
+      <div><span class="badge-nn">NN</span></div>
+    </div>
+    <div class="field-row">
+      <div></div>
+      <div class="field-name">email</div>
+      <div class="field-type">VARCHAR(120)</div>
+      <div><span class="badge-nn">NN</span></div>
+    </div>
+    <div class="field-row">
+      <div></div>
+      <div class="field-name">password</div>
+      <div class="field-type">VARCHAR(200)</div>
+      <div><span class="badge-nn">NN</span></div>
+    </div>
+    <div class="field-row">
+      <div></div>
+      <div class="field-name">role</div>
+      <div class="field-type">VARCHAR(20)</div>
+      <div style="font-size:0.68rem;color:var(--muted)">user/admin</div>
+    </div>
+  </div>
+
+  <!-- FEEDBACK TABLE -->
+  <div class="schema-table">
+    <div class="schema-table-header">
+      <div>
+        <div class="tname">💬 feedback</div>
+        <div class="tdesc">Stores all feedback messages and sentiment results</div>
+      </div>
+    </div>
+    <div class="field-row" style="background:rgba(42,42,61,0.3)">
+      <div style="font-size:0.65rem;color:var(--muted);text-align:center">#</div>
+      <div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Column</div>
+      <div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Type</div>
+      <div style="font-size:0.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em">Flags</div>
+    </div>
+    <div class="field-row">
+      <div class="pk-icon">🔑</div>
+      <div class="field-name">id</div>
+      <div class="field-type">INT</div>
+      <div><span class="badge-pk">PK</span> <span class="badge-ai">AI</span></div>
+    </div>
+    <div class="field-row">
+      <div class="pk-icon">🔗</div>
+      <div class="field-name">user_id</div>
+      <div class="field-type">INT</div>
+      <div><span class="badge-fk">FK</span></div>
+    </div>
+    <div class="field-row">
+      <div></div>
+      <div class="field-name">message</div>
+      <div class="field-type">TEXT</div>
+      <div><span class="badge-nn">NN</span></div>
+    </div>
+    <div class="field-row">
+      <div></div>
+      <div class="field-name">sentiment</div>
+      <div class="field-type">VARCHAR(20)</div>
+      <div><span class="badge-nn">NN</span></div>
+    </div>
+    <div class="field-row">
+      <div></div>
+      <div class="field-name">score</div>
+      <div class="field-type">FLOAT</div>
+      <div><span class="badge-nn">NN</span></div>
+    </div>
+    <div class="field-row">
+      <div></div>
+      <div class="field-name">timestamp</div>
+      <div class="field-type">DATETIME</div>
+      <div style="font-size:0.68rem;color:var(--muted)">DEFAULT NOW</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ER DIAGRAM -->
+<div class="er-box">
+  <div style="font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;margin-bottom:0.8rem;text-align:left">ER Relationship Diagram</div>
+  <div class="er-diagram">
+    <div class="er-entity">
+      <div class="ename">user</div>
+      <div class="efields">
+        🔑 id (PK)<br>
+        name<br>
+        email (UNIQUE)<br>
+        password<br>
+        role
+      </div>
+    </div>
+    <div class="er-arrow">
+      <div style="font-size:0.75rem;color:var(--pos);font-weight:700">1</div>
+      <div style="font-size:1.8rem;color:var(--accent)">───</div>
+      <div style="font-size:0.68rem;color:var(--muted)">one-to-many</div>
+      <div style="font-size:1.8rem;color:var(--accent)">──▶</div>
+      <div style="font-size:0.75rem;color:var(--pos);font-weight:700">N</div>
+    </div>
+    <div class="er-entity">
+      <div class="ename">feedback</div>
+      <div class="efields">
+        🔑 id (PK)<br>
+        🔗 user_id (FK → user.id)<br>
+        message<br>
+        sentiment<br>
+        score<br>
+        timestamp
+      </div>
+    </div>
+  </div>
+  <div style="margin-top:1rem;font-size:0.78rem;color:var(--muted)">
+    One <strong style="color:var(--text)">user</strong> can have many <strong style="color:var(--text)">feedback</strong> entries · 
+    <code style="font-family:'JetBrains Mono',monospace;font-size:0.75rem">user_id</code> is NULL for guest submissions · 
+    ON DELETE SET NULL
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- SECTION 3 — Postman Results                           -->
+<!-- ══════════════════════════════════════════════════════ -->
+<h2>③ Postman API Testing Results <span class="tag">9 Endpoints</span></h2>
+
+<div class="postman-list">
+
+  <!-- TC1: Register -->
+  <div class="postman-item">
+    <div class="postman-header">
+      <span class="method-badge POST">POST</span>
+      <span class="endpoint-url">http://localhost:5000/api/register</span>
+      <span class="status-badge ok">201 Created</span>
+    </div>
+    <div class="postman-body">
+      <div class="pane">
+        <div class="pane-label">Request Body (JSON)</div>
+        <pre>{
+  "name": "Test User",
+  "email": "test@example.com",
+  "password": "Test@123"
+}</pre>
+      </div>
+      <div class="pane">
+        <div class="pane-label">Response</div>
+        <pre>{
+  "message": "Registered successfully",
+  "role": "user"
+}</pre>
+        <div class="desc" style="margin-top:0.7rem">
+          <strong>Result:</strong> User created in DB. Role auto-assigned as <code>admin</code> if email is <code>admin@feedback.com</code>, otherwise <code>user</code>. Duplicate email returns <strong>409 Conflict</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC2: Login -->
+  <div class="postman-item">
+    <div class="postman-header">
+      <span class="method-badge POST">POST</span>
+      <span class="endpoint-url">http://localhost:5000/api/login</span>
+      <span class="status-badge ok">200 OK</span>
+    </div>
+    <div class="postman-body">
+      <div class="pane">
+        <div class="pane-label">Request Body (JSON)</div>
+        <pre>{
+  "email": "test@example.com",
+  "password": "Test@123"
+}</pre>
+      </div>
+      <div class="pane">
+        <div class="pane-label">Response</div>
+        <pre>{
+  "message": "Login successful",
+  "name": "Test User",
+  "role": "user"
+}</pre>
+        <div class="desc" style="margin-top:0.7rem">
+          <strong>Result:</strong> Session cookie set. Wrong credentials return <strong>401 Unauthorized</strong> with <code>"error": "Invalid credentials"</code>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC3: Submit Positive Feedback -->
+  <div class="postman-item">
+    <div class="postman-header">
+      <span class="method-badge POST">POST</span>
+      <span class="endpoint-url">http://localhost:5000/api/feedback</span>
+      <span class="status-badge ok">201 Created — Positive</span>
+    </div>
+    <div class="postman-body">
+      <div class="pane">
+        <div class="pane-label">Request Body (JSON)</div>
+        <pre>{
+  "message": "The service was absolutely amazing! I loved every bit of it."
+}</pre>
+      </div>
+      <div class="pane">
+        <div class="pane-label">Response</div>
+        <pre>{
+  "id": 1,
+  "sentiment": "Positive",
+  "score": 0.8442
+}</pre>
+        <div class="desc" style="margin-top:0.7rem">
+          <strong>Result:</strong> VADER compound score <code>0.8442 ≥ 0.05</code> → classified as <strong style="color:var(--pos)">Positive</strong>. Entry saved to DB with user_id from session.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC4: Submit Negative Feedback -->
+  <div class="postman-item">
+    <div class="postman-header">
+      <span class="method-badge POST">POST</span>
+      <span class="endpoint-url">http://localhost:5000/api/feedback</span>
+      <span class="status-badge ok">201 Created — Negative</span>
+    </div>
+    <div class="postman-body">
+      <div class="pane">
+        <div class="pane-label">Request Body (JSON)</div>
+        <pre>{
+  "message": "This is the worst experience I have ever had. Terrible!"
+}</pre>
+      </div>
+      <div class="pane">
+        <div class="pane-label">Response</div>
+        <pre>{
+  "id": 2,
+  "sentiment": "Negative",
+  "score": -0.7845
+}</pre>
+        <div class="desc" style="margin-top:0.7rem">
+          <strong>Result:</strong> Score <code>-0.7845 ≤ -0.05</code> → classified as <strong style="color:var(--neg)">Negative</strong>. Stored in DB.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC5: Submit Neutral Feedback -->
+  <div class="postman-item">
+    <div class="postman-header">
+      <span class="method-badge POST">POST</span>
+      <span class="endpoint-url">http://localhost:5000/api/feedback</span>
+      <span class="status-badge ok">201 Created — Neutral</span>
+    </div>
+    <div class="postman-body">
+      <div class="pane">
+        <div class="pane-label">Request Body (JSON)</div>
+        <pre>{
+  "message": "The product arrived on time."
+}</pre>
+      </div>
+      <div class="pane">
+        <div class="pane-label">Response</div>
+        <pre>{
+  "id": 3,
+  "sentiment": "Neutral",
+  "score": 0.0
+}</pre>
+        <div class="desc" style="margin-top:0.7rem">
+          <strong>Result:</strong> Score <code>0.0</code> between -0.05 and 0.05 → classified as <strong style="color:var(--neu)">Neutral</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC6: Empty feedback -->
+  <div class="postman-item">
+    <div class="postman-header">
+      <span class="method-badge POST">POST</span>
+      <span class="endpoint-url">http://localhost:5000/api/feedback</span>
+      <span class="status-badge err">400 Bad Request</span>
+    </div>
+    <div class="postman-body">
+      <div class="pane">
+        <div class="pane-label">Request Body (JSON)</div>
+        <pre>{
+  "message": ""
+}</pre>
+      </div>
+      <div class="pane">
+        <div class="pane-label">Response</div>
+        <pre>{
+  "error": "Message is required"
+}</pre>
+        <div class="desc" style="margin-top:0.7rem">
+          <strong>Result:</strong> Empty message rejected with <strong>400</strong>. No DB insert performed. Input validation working correctly.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC7: GET summary -->
+  <div class="postman-item">
+    <div class="postman-header">
+      <span class="method-badge GET">GET</span>
+      <span class="endpoint-url">http://localhost:5000/api/summary</span>
+      <span class="status-badge ok">200 OK</span>
+    </div>
+    <div class="postman-body">
+      <div class="pane">
+        <div class="pane-label">Request</div>
+        <pre>No body required.
+No authentication required.
+(Public endpoint)</pre>
+      </div>
+      <div class="pane">
+        <div class="pane-label">Response</div>
+        <pre>{
+  "total": 3,
+  "positive": 1,
+  "negative": 1,
+  "neutral": 1,
+  "trend": {
+    "2024-09-05": {
+      "Positive": 1,
+      "Negative": 1,
+      "Neutral": 1
+    }
+  }
+}</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC8: My Feedback -->
+  <div class="postman-item">
+    <div class="postman-header">
+      <span class="method-badge GET">GET</span>
+      <span class="endpoint-url">http://localhost:5000/api/my-feedback</span>
+      <span class="status-badge ok">200 OK</span>
+    </div>
+    <div class="postman-body">
+      <div class="pane">
+        <div class="pane-label">Request</div>
+        <pre>No body required.
+Requires: login session cookie.
+(Must be logged in)</pre>
+      </div>
+      <div class="pane">
+        <div class="pane-label">Response</div>
+        <pre>[
+  {
+    "id": 1,
+    "message": "The service was amazing!",
+    "sentiment": "Positive",
+    "score": 0.8442,
+    "timestamp": "2024-09-05 20:45"
+  }
+]</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- TC9: Admin delete -->
+  <div class="postman-item">
+    <div class="postman-header">
+      <span class="method-badge DELETE">DELETE</span>
+      <span class="endpoint-url">http://localhost:5000/api/admin/delete/1</span>
+      <span class="status-badge ok">200 OK</span>
+    </div>
+    <div class="postman-body">
+      <div class="pane">
+        <div class="pane-label">Request</div>
+        <pre>No body required.
+Requires: admin session cookie.
+URL param: feedback ID = 1</pre>
+      </div>
+      <div class="pane">
+        <div class="pane-label">Response</div>
+        <pre>{
+  "message": "Deleted"
+}</pre>
+        <div class="desc" style="margin-top:0.7rem">
+          <strong>Result:</strong> Entry removed from DB. Non-admin users receive <strong>403 Forbidden</strong>. Non-existent ID returns <strong>404 Not Found</strong>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- legend -->
+<div style="display:flex;gap:1.2rem;flex-wrap:wrap;margin-top:1rem;padding-top:1.2rem;border-top:1px solid var(--border);font-size:0.75rem;color:var(--muted)">
+  <span><span class="badge-pk" style="display:inline">PK</span> Primary Key</span>
+  <span><span class="badge-fk" style="display:inline">FK</span> Foreign Key</span>
+  <span><span class="badge-nn" style="display:inline">NN</span> Not Null</span>
+  <span><span class="badge-ai" style="display:inline">AI</span> Auto Increment</span>
+  <span style="margin-left:auto">FeedbackIQ © 2024</span>
+</div>
+
+</body>
+</html>
